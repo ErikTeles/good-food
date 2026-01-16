@@ -1,41 +1,51 @@
 package br.com.goodfood.domain.user;
 
+import br.com.goodfood.domain.auth.LoginResponseDTO;
+import br.com.goodfood.infra.exception.BusinessRuleException;
+import br.com.goodfood.infra.exception.ConstraintException;
+import br.com.goodfood.infra.security.TokenService;
 import br.com.goodfood.service.ImageStorageService;
-import br.com.goodfood.service.MapperService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
+    private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
-    @Autowired
-    private ImageStorageService imageStorageService;
+    @Transactional
+    public LoginResponseDTO userRegister(UserRegisterDTO dto, MultipartFile profilePic) {
+        Boolean user = userRepository.existsByEmail(dto.email());
 
-    @Autowired
-    private MapperService mapperService;
-
-    public UserDTO userRegister(UserRegisterDTO dto, MultipartFile profilePic) {
-        User user;
-
-        try {
-            if (profilePic != null && !profilePic.isEmpty()) {
-                String imageName = imageStorageService.upload(profilePic);
-
-                user = new User(dto, imageName);
-            } else {
-                user = new User(dto, null);
-            }
-
-            userRepository.save(user);
-        } catch (IOException e) {
-            throw new RuntimeException("Erro! Não foi possível salvar a foto de perfil do usuário." + e.getMessage());
+        if (user) {
+            throw new BusinessRuleException("Erro! Não foi possível cadastrar usuário. Já existe um usuário com esse e-mail cadastrado.");
         }
 
-        return mapperService.transform(user, UserDTO.class);
+        try {
+            User newUser;
+
+            if (profilePic != null && !profilePic.isEmpty()) {
+                String imageName = imageStorageService.upload(profilePic);
+                newUser = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()), imageName);
+
+            } else {
+                newUser = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()), null);
+            }
+
+            userRepository.save(newUser);
+            String token = tokenService.generateToken(newUser);
+
+            return new LoginResponseDTO(newUser.getName(), token);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro! Não foi possível salvar a foto de perfil do usuário.");
+        }
     }
 }

@@ -12,7 +12,7 @@ import lombok.*;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idUser")
     private Long idUser;
 
@@ -30,10 +30,10 @@ public class User {
     @Column(name = "profilePic")
     private String profilePic;
 
-    public User(UserRegisterDTO data, String profilePic) {
-        this.name = data.name();
-        this.email = data.email().toLowerCase();
-        this.password = data.password();
+    public User(String name, String email, String password, String profilePic) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
         this.profilePic = profilePic;
     }
 
