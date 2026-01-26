@@ -10,7 +10,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:4200") // Alterar para url do front-end
+                .allowedOrigins("*") // Alterar para url do front-end
                 .allowedMethods("GET", "POST", "DELETE", "PUT");
     }
 }
