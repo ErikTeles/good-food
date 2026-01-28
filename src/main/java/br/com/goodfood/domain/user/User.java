@@ -1,8 +1,11 @@
 package br.com.goodfood.domain.user;
 
+import br.com.goodfood.domain.follow.Follow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -13,7 +16,7 @@ import lombok.*;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idUser")
+    @Column(name = "id_User")
     private Long idUser;
 
     @Column(name = "name", nullable = false)
@@ -27,8 +30,18 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "profilePic")
+    @Column(name = "profile_Pic")
     private String profilePic;
+
+    @OneToMany(mappedBy = "following")
+    @JsonIgnore
+    @ToString.Exclude
+    private Set<Follow> followers;
+
+    @OneToMany(mappedBy = "follower")
+    @JsonIgnore
+    @ToString.Exclude
+    private Set<Follow> following;
 
     public User(String name, String email, String password, String profilePic) {
         this.name = name;

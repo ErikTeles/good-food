@@ -23,7 +23,7 @@ public class TokenService {
 
             String token = JWT.create()
                     .withIssuer("good-food-api")
-                    .withSubject(user.getEmail())
+                    .withSubject(user.getIdUser().toString())
                     .withExpiresAt(this.generateExpirationDate())
                     .sign(algorithm);
 

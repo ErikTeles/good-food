@@ -7,8 +7,10 @@ import br.com.goodfood.infra.exception.AuthenticationException;
 import br.com.goodfood.infra.exception.BusinessRuleException;
 import br.com.goodfood.infra.exception.ObjectNotFoundException;
 import br.com.goodfood.infra.security.TokenService;
-import br.com.goodfood.service.ImageStorageService;
+import br.com.goodfood.service.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final ImageStorageService imageStorageService;
+    private final ImageService imageService;
 
     public LoginResponseDTO login(LoginRequestDTO loginData) {
         User user = userRepository.findByEmail(loginData.email()).orElseThrow(() -> new ObjectNotFoundException("Erro! Não foi possível realizar o login! E-mail ou senha incorretos."));
@@ -47,7 +49,7 @@ public class AuthService {
             User newUser;
 
             if (profilePic != null && !profilePic.isEmpty()) {
-                String imageName = imageStorageService.upload(profilePic);
+                String imageName = imageService.uploadImage(profilePic);
                 newUser = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()), imageName);
 
             } else {
@@ -61,5 +63,17 @@ public class AuthService {
         } catch (IOException e) {
             throw new RuntimeException("Erro! Não foi possível salvar a foto de perfil do usuário.");
         }
+    }
+
+    public User getAuthenticatedUser() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("Usuário não autenticado");
+        }
+
+        Long userId = Long.parseLong(authentication.getPrincipal().toString());
+        return userRepository.getReferenceById(userId);
     }
 }
